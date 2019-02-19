@@ -61,7 +61,7 @@
 ;;; e.g., (slice-list '(1 2) 1 4) => '(2)  	
 ; if the range of the slice is empty/nonexistent, then the result should be '() 
 (define (slice-list lst n m)  	
-  (take (drop lst n) (+ m 1)))	
+  (if (>(+ n m 1) (length lst)) (drop lst n) (take (drop lst n) (+ m 1))))
   	
 
 ; Define a palindrome? predicate that only returns true for strings that are palindromes  	
