@@ -35,13 +35,13 @@
 ; Define a list-reverse function that takes a list to its reverse
 ;;; e.g., (list-reverse '(1 2 3)) => '(3 2 1) 	  
 (define (list-reverse lst) 	  
-  (reverse lst))  	
+  (if (null? lst) null (append (list-reverse (cdr lst)) (list (car lst)))))  	
 
 
 ; Define an list-append function which takes two lists and returns their concatenation
 ;;; e.g., (list-append '(1) '(2 3)) => '(1 2 3)
 (define (list-append lst0 lst1)	
-  (append lst0 lst1))  	
+  (foldr (lambda (roll into) (cons roll into)) lst1 lst0))  	
 
 
 ; Define a zip-lists function that takes multiple lists and zips them together into 	  
@@ -51,7 +51,10 @@
 ; any number of lists together 	  
 ;;; e.g., (zip-lists '(1) '(2 3 4) '(5 6)) => '((1 2 5))  	
 (define (zip-lists . args) 	  
-  'TODO) 
+  (if (or (null? args) (null? (car args)) (null? (car (cdr args))))
+      '()
+      (cons (append (list (car (car args))) (foldl (lambda (lst acc) (append acc (list (car lst)))) '() (cdr args)))
+            (apply zip-lists (foldl (lambda (lst acc) (append acc (list (cdr lst)))) '() args)))))
 
 
 ; Define a slice-list function that takes a list, start position, and	
@@ -75,7 +78,12 @@
 ; encoded as lists, where n is a number? and ** performs exponentiation	
 ;;; e.g., (interp-arith '(+ (* 2 3) (- 11 (** 2 3)))) => 9
 (define (interp-arith e) 	  
-  'TODO) 	  
+  (match e
+      [`(+ ,a ,b) (+ (interp-arith (car (cdr e))) (interp-arith (car (cdr (cdr e)))))]
+      [`(- ,a ,b) (- (interp-arith (car (cdr e))) (interp-arith (car (cdr (cdr e)))))]
+      [`(* ,a ,b) (* (interp-arith (car (cdr e))) (interp-arith (car (cdr (cdr e)))))]
+      [`(** ,a ,b) (expt (interp-arith (car (cdr e))) (interp-arith (car (cdr (cdr e)))))]
+      [ _ e])) 		 
 
 
 ; Define a function reduce-lambda, that takes a lambda term in language:  	
