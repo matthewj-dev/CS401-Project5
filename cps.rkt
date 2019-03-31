@@ -60,7 +60,9 @@
                    ; Check if anf is an ae, if so, done 
                    ; if not, add a let-binding for it 
                    (match anf 	  
-                          ; TODO: missing cases? 
+                          ; TODO: missing cases?
+                          [(? symbol? x)
+                          (k x)] 
                           [`(lambda ,xs ,e0) 	  
                            (k `(lambda ,xs ,e0))] 	  
                           [else  	
@@ -108,7 +110,7 @@
             (define k (gensym 'k)) 
             ; add a new first parameter k (for the current continuation) 
             ; to this lambda so it may be passed its continuation  	
-            'TODO] 	  
+            `(lambda (,k ,@xs) ,(T-e e0 k))] 	  
            ; Other atomic expressions require no changes	
            [else ae]))  	
   (define (T-e e cae) 
@@ -119,7 +121,17 @@
            [`(,(? prim? op) ,aes ...)
             (define t (gensym 't)) 	  
             `(let ([,t (,op ,@(map T-ae aes))]) (,cae 0 ,t))]  	
-           ; TODO: missing forms	
+           ; TODO: missing forms
+           [`(let ([,x ,RHS]) ,BODY)
+           (T-e RHS `(lambda (_ ,x) ,(T-e BODY cae)))]
+           [`(,aef ,aes ...)
+            `(,(T-ae aef) ,cae ,@(map T-ae aes))]
+           [ `(call/cc ,aef)
+           `(,(T-ae aef) ,cae ,cae)]
+           [`(if ,aef ,e0 ,e1)
+           `(if (T-ae ,aef) ,(T-e e0 cae) ,(T-e e1 cae))]
+           [`(lambda . ,rest)
+            `(,cae '0 ,(T-ae e))]
            ))
   ; We transform the program e, using an initial continuation that calls halt
   ; Here we assume the first parameter to functions is the current continuation.  	
