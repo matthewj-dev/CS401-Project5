@@ -101,38 +101,42 @@
 ; n is a number?  	
 ; prim-op is a prim? 
 
-
 ; Continuation-passing style (CPS) conversion pass 	  
 (define (cps-convert e)
   (define (T-ae ae) 	  
     (match ae  	
-           [`(lambda (,xs ...) ,e0) 	  
+           [(? symbol? x) x]
+           [`(lambda (,xs) ,e0) 	  
             (define k (gensym 'k)) 
             ; add a new first parameter k (for the current continuation) 
             ; to this lambda so it may be passed its continuation  	
-            `(lambda (,k ,@xs) ,(T-e e0 k))] 	  
+            `(lambda (,k ,xs) ,(T-e e0 k))] 	  
            ; Other atomic expressions require no changes	
-           [else ae]))  	
+           [else ae]
+           ))  	
   (define (T-e e cae) 
     (match e 
+           [(? number? n)
+            `(,cae 0 ,n)]
+            [`(lambda . ,rest)
+            `(,cae 0 ,(T-ae e))]
            [(? symbol? x)
-            `(,cae 0 ,x)] 	  
+            `(,cae ,x ,x)]
            ; TODO: missing forms  	
            [`(,(? prim? op) ,aes ...)
-            (define t (gensym 't)) 	  
-            `(let ([,t (,op ,@(map T-ae aes))]) (,cae 0 ,t))]  	
+            (define q (gensym 'q)) 	  
+            `(let ([,q (,op ,@(map T-ae aes))]) (,cae 0 ,q))]  	
            ; TODO: missing forms
            [`(let ([,x ,RHS]) ,BODY)
-           (T-e RHS `(lambda (_ ,x) ,(T-e BODY cae)))]
+           (define y (gensym '_))
+           (T-e RHS `(lambda (,y ,x) ,(T-e BODY cae)))]
+            [`(if ,ae ,e0 ,e1)
+           `(if ,ae ,(T-e e0 cae) ,(T-e e1 cae))]
+           [`(call/cc ,aef)
+           `(,(T-ae aef) ,cae ,cae)]
            [`(,aef ,aes ...)
             `(,(T-ae aef) ,cae ,@(map T-ae aes))]
-           [ `(call/cc ,aef)
-           `(,(T-ae aef) ,cae ,cae)]
-           [`(if ,aef ,e0 ,e1)
-           `(if (T-ae ,aef) ,(T-e e0 cae) ,(T-e e1 cae))]
-           [`(lambda . ,rest)
-            `(,cae '0 ,(T-ae e))]
-           ))
+            ))
   ; We transform the program e, using an initial continuation that calls halt
   ; Here we assume the first parameter to functions is the current continuation.  	
   ; If it's the last, then use (x _) as the parameter list. We use a _ because
