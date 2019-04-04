@@ -25,7 +25,7 @@
 ;  	
 ; Honor pledge (please write your name.) 	  
 ;  	
-; I **firstname lastname** have completed this code myself, without  	
+; I **Matthew Jackson** have completed this code myself, without  	
 ; unauthorized assistance, and have followed the academic honor code. 	  
 ;  	
 ; Edit the code below to complete your solution. 
